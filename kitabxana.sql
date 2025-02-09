@@ -1,0 +1,100 @@
+CREATE TABLE BOOKS (
+                    BOOK_ID NUMBER PRIMARY KEY, 
+                    TITLE VARCHAR(50), 
+                    AUTHOR VARCHAR(70), 
+                    GENRE VARCHAR(30), 
+                    AVALIABLE_COPIES NUMBER
+);
+CREATE TABLE MEMBERS (
+                      MEMBER_ID NUMBER PRIMARY KEY, 
+                      FULL_NAME VARCHAR(70), 
+                      EMAIL VARCHAR(270), 
+                      PHONE VARCHAR(50), 
+                      MEMBERSHIP_TYPE VARCHAR(50)
+);
+CREATE TABLE BORROWED_BOOKS (
+                             BORROW_ID NUMBER PRIMARY KEY,
+                             MEMBER_ID NUMBER,
+                             BOOK_ID NUMBER,
+                             BORROW_DATE DATE,
+                             DUE_DATE DATE,
+                             RETURN_DATE DATE,
+                             CONSTRAINT FK_MEMBERS_MEMBER_ID FOREIGN KEY (MEMBER_ID) REFERENCES MEMBERS(MEMBER_ID),
+                             CONSTRAINT FK_BOOKS_BOOK_ID FOREIGN KEY (BOOK_ID) REFERENCES BOOKS(BOOK_ID)
+);
+
+
+SELECT * FROM MEMBERS;
+SELECT * FROM BOOKS;
+SELECT * FROM BORROWED_BOOKS;
+
+
+/*Bütün üzvlərin götürdüyü kitabları göstərən sorğu*/
+
+SELECT M.FULL_NAME, B.TITLE, BB.BORROW_DATE, BB.DUE_DATE, BB.RETURN_DATE
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID=M.MEMBER_ID
+JOIN BOOKS B ON BB.BOOK_ID=B.BOOK_ID;
+
+/*Hal-hazırda qaytarılmamış kitabların siyahısını göstərən sorğu*/
+
+SELECT M.FULL_NAME, B.TITLE, BB.BORROW_DATE, BB.DUE_DATE, BB.RETURN_DATE
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID=M.MEMBER_ID
+JOIN BOOKS B ON BB.BOOK_ID=B.BOOK_ID
+WHERE BB.RETURN_DATE IS NULL;
+
+/*Qaytarılma müddəti keçmiş olan kitabların siyahısı*/
+
+SELECT M.FULL_NAME, B.TITLE, BB.BORROW_DATE, BB.DUE_DATE, BB.RETURN_DATE
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID=M.MEMBER_ID
+JOIN BOOKS B ON BB.BOOK_ID=B.BOOK_ID
+WHERE BB.RETURN_DATE IS NULL AND BB.DUE_DATE < SYSDATE;
+
+/*Ən çox kitab götürən 10 müştərini göstərən sörğu*/
+
+SELECT M.FULL_NAME, COUNT(BB.MEMBER_ID) AS BORROWED_COUNT
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID=M.MEMBER_ID
+GROUP BY M.FULL_NAME
+ORDER BY BORROWED_COUNT DESC
+FETCH FIRST 10 ROWS WITH TIES;
+
+/*Kitabxanada mövcud olan kitabların siyahısını göstərən sorğu*/
+
+SELECT * FROM BOOKS B WHERE B.AVALIABLE_COPIES > 0;
+
+
+/*Ayrı-ayrılıqda üzvlərin kitab götürmə tarixçəsini göstərən sörğu*/
+
+SELECT B.TITLE, BB.BORROW_DATE, BB.DUE_DATE, BB.RETURN_DATE
+FROM BORROWED_BOOKS BB
+JOIN BOOKS B ON BB.BOOK_ID = B.BOOK_ID
+WHERE BB.MEMBER_ID = 175;
+
+
+/*Qaytarılmamış kitabların siyasını göstərən sörğu*/
+
+SELECT M.FULL_NAME, B.TITLE, BB.DUE_DATE
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID = M.MEMBER_ID
+JOIN BOOKS B ON BB.BOOK_ID = B.BOOK_ID
+WHERE BB.RETURN_DATE IS NULL;
+
+
+/*Hər bir üzvün kitabxanaya neçə kitab borclu olduğunu göstərən sorğu*/
+
+SELECT M.FULL_NAME, COUNT(BB.BOOK_ID) AS TOTAL_BORROWED_BOOKS
+FROM BORROWED_BOOKS BB
+JOIN MEMBERS M ON BB.MEMBER_ID = M.MEMBER_ID
+WHERE BB.RETURN_DATE IS NULL
+GROUP BY M.FULL_NAME;
+
+/*Kitabların növünə görə sayını göstərən sorğu*/
+
+SELECT Genre, COUNT(Book_ID) AS Books_Count
+FROM BOOKS
+GROUP BY Genre
+ORDER BY Books_Count DESC;
+
